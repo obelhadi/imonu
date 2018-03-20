@@ -44,8 +44,8 @@ public class Session extends Item implements TimestampedItem {
 		this.systemProperties = Optional.ofNullable(systemProperties).orElse(new HashMap<>());
 		this.timeStamp = timeStamp;
 		this.lastEventDate = lastEventDate;
-		this.size = Optional.of(size).orElse(0);
-		this.duration = Optional.of(duration).orElse(0);
+		this.size = Optional.ofNullable(size).orElse(0);
+		this.duration = Optional.ofNullable(duration).orElse(0);
 	}
 
 	@Override
