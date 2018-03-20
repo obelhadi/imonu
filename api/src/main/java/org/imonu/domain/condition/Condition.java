@@ -1,4 +1,4 @@
-package org.imonu.condition;
+package org.imonu.domain.condition;
 
 import java.util.HashMap;
 import java.util.Map;

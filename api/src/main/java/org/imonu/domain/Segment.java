@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.imonu.condition.Condition;
+import org.imonu.domain.condition.Condition;
 
 @JsonDeserialize(builder = Segment.SegmentBuilder.class)
 @ToString(callSuper = true)
