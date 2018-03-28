@@ -9,10 +9,9 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.search.SearchHits;
-import org.imonu.domain.Item;
 import org.imonu.service.EntityMapper;
 
-public class ScrollSearchExtractor<T extends Item> implements Function<SearchResponse, List<T>>, ItemsExtractor {
+public class ScrollSearchExtractor<T> implements Function<SearchResponse, SearchResult<T>>, ItemsExtractor {
 
 	final private Client client;
 
@@ -32,7 +31,7 @@ public class ScrollSearchExtractor<T extends Item> implements Function<SearchRes
 
 
 	@Override
-	public List<T> apply(SearchResponse response) {
+	public SearchResult<T> apply(SearchResponse response) {
 		List<T> result = new ArrayList<>();
 		while (true) {
 			final SearchHits hits = response.getHits();
@@ -47,6 +46,6 @@ public class ScrollSearchExtractor<T extends Item> implements Function<SearchRes
 			}
 		}
 		client.prepareClearScroll().addScrollId(response.getScrollId()).execute().actionGet();
-		return result;
+		return new SearchResult<>(result);
 	}
 }

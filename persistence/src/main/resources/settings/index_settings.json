@@ -1,0 +1,15 @@
+{ 
+    "index" : { 
+        "number_of_shards" :   numberOfShards,
+        "number_of_replicas" :  numberOfReplicas
+    }, 
+    "analysis": { 
+      "analyzer": { 
+        "folding": { 
+          "type":"custom", 
+          "tokenizer": "keyword", 
+          "filter":  [ "lowercase", "asciifolding" ] 
+        } 
+      } 
+    } 
+}

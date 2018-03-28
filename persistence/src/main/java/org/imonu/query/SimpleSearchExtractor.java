@@ -3,14 +3,11 @@ package org.imonu.query;
 import java.util.List;
 import java.util.function.Function;
 
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHits;
-import org.imonu.domain.Item;
 import org.imonu.service.EntityMapper;
 
-public class SimpleSearchExtractor<T extends Item> implements Function<SearchResponse, Tuple3<List<T>, String, Long>>, ItemsExtractor {
+public class SimpleSearchExtractor<T> implements Function<SearchResponse, SearchResult<T>>, ItemsExtractor {
 
 	final private EntityMapper entityMapper;
 
@@ -21,11 +18,11 @@ public class SimpleSearchExtractor<T extends Item> implements Function<SearchRes
 		this.clazz = clazz;
 	}
 
+
 	@Override
-	public Tuple3<List<T>, String, Long> apply(SearchResponse searchResponse) {
+	public SearchResult<T> apply(SearchResponse searchResponse) {
 		final SearchHits hits = searchResponse.getHits();
 		final List<T> items = extractItems(hits, this.clazz, this.entityMapper);
-		return Tuple.of(items, searchResponse.getScrollId(), hits.getTotalHits());
+		return new <T>SearchResult<T>(items, searchResponse.getScrollId(), hits.getTotalHits());
 	}
-
 }

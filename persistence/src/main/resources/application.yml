@@ -1,0 +1,13 @@
+
+elasticsearch:
+  host: localhost
+  port: 9300
+  clusterName: elasticsearch
+  numberOfShards: 1
+  numberOfReplicas: 1
+  indexName: imonu
+  indexNames:
+      geonameEntry: geonames
+  itemsMonthlyIndexed:
+      - event
+      - session

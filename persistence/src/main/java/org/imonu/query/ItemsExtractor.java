@@ -13,7 +13,7 @@ import org.imonu.service.EntityMapper;
 
 public interface ItemsExtractor {
 
-	default <T extends Item> List<T> extractItems(SearchHits hits, Class<T> clazz, EntityMapper entityMapper) {
+	default <T> List<T> extractItems(SearchHits hits, Class<T> clazz, EntityMapper entityMapper) {
 		return Stream.of(hits.getHits())
 				.map(SearchHit::getSourceAsString)
 				.map(source -> entityMapper.mapToObject(source, clazz).toJavaOptional())
