@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vavr.collection.HashMap;
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -17,7 +17,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.AfterClass;
@@ -53,9 +52,12 @@ public abstract class AbstractESIntegrationTest {
 	}
 
 	void refresh(String index) {
-
 		client.admin().indices().prepareFlush(index).execute().actionGet();
 		client.admin().indices().prepareRefresh(index).execute().actionGet();
+	}
+
+	String readJsonPath(String item, String path) {
+		return JsonPath.parse(item).read(path, String.class);
 	}
 
 	Map<String, String> getAll(String index, String type) {

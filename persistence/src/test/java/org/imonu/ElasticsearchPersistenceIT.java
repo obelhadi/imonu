@@ -1,13 +1,13 @@
 package org.imonu;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.when;
 
 import java.net.UnknownHostException;
@@ -55,7 +55,6 @@ public class ElasticsearchPersistenceIT extends AbstractESIntegrationTest {
 	public void setUp() {
 		elasticsearchPersistenceService = new ElasticsearchPersistenceService(client, appProperties, resourceFileLoader,
 				new DefaultEntityMapper(), typeMapping);
-
 		when(typeMapping.getIndexName(any())).thenReturn(INDEX);
 		when(typeMapping.getType(ArgumentMatchers.<Class<TestItem>>any())).thenReturn(TEST_ITEM_TYPE);
 		embeddedElastic.deleteIndex(INDEX);
@@ -79,8 +78,12 @@ public class ElasticsearchPersistenceIT extends AbstractESIntegrationTest {
 		assertThat(allItems.size(), is(1));
 		final String item = allItems.get(testItem.getItemId());
 		assertThat(item, is(notNullValue()));
-
+		final String itemId = readJsonPath(item, "$.itemId");
+		final String name = readJsonPath(item, "$.name");
+		assertThat(itemId, is(testItem.getItemId()));
+		assertThat(name, is(testItem.getName()));
 	}
+
 
 	@Test
 	public void should_load_item_by_id() throws JsonProcessingException, UnknownHostException {
@@ -93,9 +96,43 @@ public class ElasticsearchPersistenceIT extends AbstractESIntegrationTest {
 		final Optional<TestItem> optionalItem = elasticsearchPersistenceService.load(itemId, TestItem.class);
 
 		// Then
-		assertThat(optionalItem.isPresent(), is(true));
+		assertTrue(optionalItem.isPresent());
 		final TestItem loadedItem = optionalItem.get();
 		assertThat(loadedItem, is(equalTo(testItem)));
+	}
+
+	@Test
+	public void should_get_all_items() throws JsonProcessingException, UnknownHostException {
+		// Given
+		final TestItem testItem1 = new TestItem("Id1", "My 1st Test Item");
+		final TestItem testItem2 = new TestItem("Id2", "My 2nd Test Item");
+		index(INDEX, TEST_ITEM_TYPE, testItem1.getItemId(), objectMapper.writeValueAsString(testItem1));
+		index(INDEX, TEST_ITEM_TYPE, testItem2.getItemId(), objectMapper.writeValueAsString(testItem2));
+
+		// When
+		final List<TestItem> allItems = elasticsearchPersistenceService.getAllItems(TestItem.class);
+
+		// Then
+		assertThat(allItems, hasSize(2));
+		assertThat(allItems, hasItems(testItem1, testItem2));
+	}
+
+	@Test
+	public void should_remove_item_by_id() throws JsonProcessingException {
+		// Given
+		final String itemId = "ID1";
+		final TestItem testItem = new TestItem(itemId, "My Test Item");
+		index(INDEX, TEST_ITEM_TYPE, itemId, objectMapper.writeValueAsString(testItem));
+
+		// When
+		final boolean removed = elasticsearchPersistenceService.remove(itemId, TestItem.class);
+		refresh(INDEX);
+
+		// Then
+		assertTrue(removed);
+		final Map<String, String> allItems = getAll(INDEX, TEST_ITEM_TYPE);
+		assertTrue(allItems.isEmpty());
+
 	}
 
 }
