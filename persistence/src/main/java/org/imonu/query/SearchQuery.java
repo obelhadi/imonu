@@ -3,12 +3,15 @@ package org.imonu.query;
 import java.util.List;
 import java.util.Optional;
 
+import io.vavr.Tuple2;
 import lombok.Getter;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.imonu.domain.PartialList;
 import org.imonu.service.EntityMapper;
 
@@ -81,16 +84,6 @@ public class SearchQuery {
 
 	}
 
-	private static SearchRequestBuilder getSearchRequestBuilder(Integer offset, Integer size, Client client, QueryModifier queryModifier, QueryBuilder query) {
-		return client.prepareSearch(queryModifier.getIndex())
-				.setTypes(queryModifier.getType())
-				.setQuery(query)
-				.setFetchSource(true)
-				.setFrom(offset)
-				.setSize(size)
-				.setVersion(true);
-	}
-
 	public <T> List<T> list(Class<T> clazz) {
 		return this.search(clazz).getList();
 	}
@@ -153,7 +146,7 @@ public class SearchQuery {
 				SearchQuery.this.queryModifier = SearchQuery.this.queryModifier.withSize(100);
 			}
 
-			final SearchRequestBuilder searchRequestBuilder = client.prepareSearch(SearchQuery.this.queryModifier.getIndex())
+			SearchRequestBuilder searchRequestBuilder = client.prepareSearch(SearchQuery.this.queryModifier.getIndex())
 					.setTypes(SearchQuery.this.queryModifier.getType())
 					.setQuery(getQuery())
 					.setScroll(keepAlive)
@@ -165,8 +158,22 @@ public class SearchQuery {
 			if (SearchQuery.this.queryModifier.isRoutingNotEmpty()) {
 				searchRequestBuilder.setRouting(SearchQuery.this.queryModifier.getRoutingAsArray());
 			}
+			searchRequestBuilder = addSortBy(searchRequestBuilder);
 			return searchRequestBuilder;
 		}
+	}
+
+	private SearchRequestBuilder addSortBy(SearchRequestBuilder searchRequestBuilder) {
+		if (SearchQuery.this.queryModifier.getSortBy() != null) {
+			final SortByExtractor sortByExtractor = SortByExtractor.of(SearchQuery.this.queryModifier.getSortBy());
+			for (GeoDistanceSortBuilder geoDistanceSortBuilder : sortByExtractor.getGeoDistanceBuilders()) {
+				searchRequestBuilder = searchRequestBuilder.addSort(geoDistanceSortBuilder);
+			}
+			for (Tuple2<String, SortOrder> fieldSortOrder : sortByExtractor.getOtherSortOrder()) {
+				searchRequestBuilder = searchRequestBuilder.addSort(fieldSortOrder._1(), fieldSortOrder._2());
+			}
+		}
+		return searchRequestBuilder;
 	}
 
 	public class SimpleSearch<T> {
@@ -183,7 +190,7 @@ public class SearchQuery {
 			if (SearchQuery.this.queryModifier.getSize() == null) {
 				SearchQuery.this.queryModifier = SearchQuery.this.queryModifier.withSize(defaultQueryLimit);
 			}
-			final SearchRequestBuilder searchRequestBuilder = client.prepareSearch(queryModifier.getIndex())
+			SearchRequestBuilder searchRequestBuilder = client.prepareSearch(queryModifier.getIndex())
 					.setTypes(queryModifier.getType())
 					.setQuery(query)
 					.setFetchSource(true)
@@ -194,6 +201,7 @@ public class SearchQuery {
 			if (SearchQuery.this.queryModifier.getRouting() != null && !SearchQuery.this.queryModifier.getRouting().isEmpty()) {
 				searchRequestBuilder.setRouting(SearchQuery.this.queryModifier.getRouting().toArray(new String[SearchQuery.this.queryModifier.getRouting().size()]));
 			}
+			searchRequestBuilder = addSortBy(searchRequestBuilder);
 
 			final SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
 			return new SimpleSearchExtractor<>(SearchQuery.this.entityMapper, clazz)

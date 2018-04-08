@@ -21,6 +21,8 @@ public class QueryModifier {
 
 	private Integer size;
 
+	private String sortBy;
+
 	private List<String> routing;
 
 

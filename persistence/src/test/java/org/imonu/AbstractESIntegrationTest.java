@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,6 +88,7 @@ public abstract class AbstractESIntegrationTest {
 				.withElasticVersion("5.6.8")
 				.withSetting(PopularProperties.TRANSPORT_TCP_PORT, PORT)
 				.withSetting(PopularProperties.CLUSTER_NAME, CLUSTER_NAME)
+				.withStartTimeout(1, TimeUnit.MINUTES)
 				.build()
 				.start();
 	}
