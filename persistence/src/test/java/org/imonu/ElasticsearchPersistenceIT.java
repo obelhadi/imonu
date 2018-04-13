@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.vavr.collection.HashMap;
 import io.vavr.control.Try;
 import org.imonu.common.TestItem;
 import org.imonu.component.ResourceFileLoader;
@@ -135,4 +137,37 @@ public class ElasticsearchPersistenceIT extends AbstractESIntegrationTest {
 
 	}
 
+	@Test
+	public void should_get_mappings_of_a_type() throws JsonProcessingException {
+		// Given
+		final String TYPE = "new_type";
+		createIndex(INDEX);
+		putMapping(INDEX, TYPE, "{\n" +
+				"  \"properties\": {\n" +
+				"    \"name\": {\n" +
+				"      \"type\": \"text\"\n" +
+				"    }\n" +
+				"  }\n" +
+				"}");
+
+		putMapping(INDEX, TYPE, "{\n" +
+				"  \"properties\": {\n" +
+				"    \"date\": {\n" +
+				"      \"type\": \"date\"\n" +
+				"    }\n" +
+				"  }\n" +
+				"}");
+
+
+		// When
+		final Map<String, Map<String, Object>> propertiesMapping = elasticsearchPersistenceService.getPropertiesMapping(TYPE);
+		// Then
+		assertThat(propertiesMapping.size(), is(2));
+		assertThat(propertiesMapping, hasEntry("name", HashMap.of("type", "text").toJavaMap()));
+		assertThat(propertiesMapping, hasEntry("date", HashMap.of("type", "date").toJavaMap()));
+
+	}
+
+
 }
+

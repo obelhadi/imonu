@@ -1,17 +1,22 @@
 
 package org.imonu.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import io.vavr.Lazy;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
@@ -86,6 +91,16 @@ public class ElasticsearchPersistenceService implements PersistenceService {
 				.toJavaOptional();
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public Map<String, Map<String, Object>> getPropertiesMapping(String itemType) {
+		GetMappingsResponse getMappingsResponse = client.admin().indices().prepareGetMappings().setTypes(itemType).execute().actionGet();
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(getMappingsResponse.getMappings().valuesIt(), Spliterator.NONNULL), false)
+				.map(val -> (Map<String, Map<String, Object>>) val.get(itemType).getSourceAsMap().get("properties"))
+				.filter(Objects::nonNull)
+				.collect(HashMap::new, HashMap::putAll, HashMap::putAll);
+	}
+
 	public <T> boolean remove(final String itemId, final Class<T> clazz) {
 		client.prepareDelete(getIndexName(clazz), getType(clazz), itemId)
 				.execute().actionGet();
@@ -123,10 +138,7 @@ public class ElasticsearchPersistenceService implements PersistenceService {
 	}
 
 	public boolean removeIndex(final String indexName) {
-		if (indexExist(indexName)) {
-			return client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged();
-		}
-		return false;
+		return indexExist(indexName) && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged();
 	}
 
 	private boolean indexExist(final String indexName) {

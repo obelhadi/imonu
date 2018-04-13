@@ -52,6 +52,22 @@ public abstract class AbstractESIntegrationTest {
 		refresh(index);
 	}
 
+	void createIndex(String index) {
+		client.admin().indices().prepareCreate(index)
+				.setSettings(Settings.builder()
+						.put("index.number_of_shards", 1)
+						.put("index.number_of_replicas", 1)
+				)
+				.execute().actionGet();
+	}
+
+	void putMapping(String index, String type, String mappingSource) {
+		this.client.admin().indices().preparePutMapping(index)
+				.setType(type)
+				.setSource(mappingSource, XContentType.JSON)
+				.execute().actionGet();
+	}
+
 	void refresh(String index) {
 		client.admin().indices().prepareFlush(index).execute().actionGet();
 		client.admin().indices().prepareRefresh(index).execute().actionGet();
