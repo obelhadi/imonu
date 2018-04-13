@@ -28,10 +28,10 @@ public class SortByExtractorTest {
 		String sortBy = "geo:" + fieldName + ":" + lat + ":" + lan + ":desc";
 
 		// When
-		final SortByExtractor sortByExtractor = new SortByExtractor(sortBy);
+		final SortByExtractor sortByExtractor = SortByExtractor.from(sortBy);
 
 		// Then
-		final List<GeoDistanceSortBuilder> geoDistanceBuilders = sortByExtractor.getGeoDistanceBuilders();
+		final List<GeoDistanceSortBuilder> geoDistanceBuilders = sortByExtractor.getGeoDistancesSort().toJavaList();
 		assertThat(geoDistanceBuilders, hasSize(1));
 		final GeoDistanceSortBuilder geoDistanceSortBuilder = geoDistanceBuilders.get(0);
 		final String actualFieldName = geoDistanceSortBuilder.fieldName();
@@ -53,10 +53,10 @@ public class SortByExtractorTest {
 		String sortBy = "geo:" + fieldName + ":" + lat + ":" + lan;
 
 		// When
-		final SortByExtractor sortByExtractor = new SortByExtractor(sortBy);
+		final SortByExtractor sortByExtractor = SortByExtractor.from(sortBy);
 
 		// Then
-		final List<GeoDistanceSortBuilder> geoDistanceBuilders = sortByExtractor.getGeoDistanceBuilders();
+		final List<GeoDistanceSortBuilder> geoDistanceBuilders = sortByExtractor.getGeoDistancesSort().toJavaList();
 		assertThat(geoDistanceBuilders, hasSize(1));
 		final GeoDistanceSortBuilder geoDistanceSortBuilder = geoDistanceBuilders.get(0);
 		final String actualFieldName = geoDistanceSortBuilder.fieldName();
@@ -77,10 +77,10 @@ public class SortByExtractorTest {
 		String sortBy = fieldName + ":" + "desc";
 
 		// When
-		final SortByExtractor sortByExtractor = new SortByExtractor(sortBy);
+		final SortByExtractor sortByExtractor = SortByExtractor.from(sortBy);
 
 		// Then
-		final List<Tuple2<String, SortOrder>> otherSortOrderList = sortByExtractor.getOtherSortOrder();
+		final List<Tuple2<String, SortOrder>> otherSortOrderList = sortByExtractor.getFieldsSort().toJavaList();
 		assertThat(otherSortOrderList, hasSize(1));
 		final Tuple2<String, SortOrder> otherSortOrder = otherSortOrderList.get(0);
 		assertThat(otherSortOrder._1(), is(fieldName));
@@ -89,16 +89,16 @@ public class SortByExtractorTest {
 	}
 
 	@Test
-	public void should_create_field_ort_with_asc_sort_order() {
+	public void should_create_field_sort_with_asc_sort_order() {
 		// Given
 		final String fieldName = "userName";
 		String sortBy = fieldName + ":" + "asc";
 
 		// When
-		final SortByExtractor sortByExtractor = new SortByExtractor(sortBy);
+		final SortByExtractor sortByExtractor = SortByExtractor.from(sortBy);
 
 		// Then
-		final List<Tuple2<String, SortOrder>> otherSortOrderList = sortByExtractor.getOtherSortOrder();
+		final List<Tuple2<String, SortOrder>> otherSortOrderList = sortByExtractor.getFieldsSort().toJavaList();
 		assertThat(otherSortOrderList, hasSize(1));
 		final Tuple2<String, SortOrder> otherSortOrder = otherSortOrderList.get(0);
 		assertThat(otherSortOrder._1(), is(fieldName));

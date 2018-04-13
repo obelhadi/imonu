@@ -165,11 +165,11 @@ public class SearchQuery {
 
 	private SearchRequestBuilder addSortBy(SearchRequestBuilder searchRequestBuilder) {
 		if (SearchQuery.this.queryModifier.getSortBy() != null) {
-			final SortByExtractor sortByExtractor = SortByExtractor.of(SearchQuery.this.queryModifier.getSortBy());
-			for (GeoDistanceSortBuilder geoDistanceSortBuilder : sortByExtractor.getGeoDistanceBuilders()) {
+			final SortByExtractor sortByExtractor = SortByExtractor.from(SearchQuery.this.queryModifier.getSortBy()).build();
+			for (GeoDistanceSortBuilder geoDistanceSortBuilder : sortByExtractor.getGeoDistancesSort()) {
 				searchRequestBuilder = searchRequestBuilder.addSort(geoDistanceSortBuilder);
 			}
-			for (Tuple2<String, SortOrder> fieldSortOrder : sortByExtractor.getOtherSortOrder()) {
+			for (Tuple2<String, SortOrder> fieldSortOrder : sortByExtractor.getFieldsSort()) {
 				searchRequestBuilder = searchRequestBuilder.addSort(fieldSortOrder._1(), fieldSortOrder._2());
 			}
 		}
